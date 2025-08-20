@@ -1,19 +1,14 @@
 pipeline {
-    agent any
-
-    parameters {
-        string(name: 'MASS', defaultValue: '300', description: 'Sprung mass [kg]')
-        string(name: 'DAMPING', defaultValue: '1200', description: 'Damping coefficient [Ns/m]')
-        string(name: 'PRESSURE', defaultValue: '2e5', description: 'Initial pressure [Pa]')
-        string(name: 'AREA', defaultValue: '0.015', description: 'Effective diaphragm area [m^2]')
-        string(name: 'VOLUME', defaultValue: '0.01', description: 'Chamber volume [m^3]')
-        string(name: 'GAMMA', defaultValue: '1.4', description: 'Polytropic index [-]')
-        string(name: 'SIM_TIME', defaultValue: '10', description: 'Simulation time [s]')
-        string(name: 'MATLAB_SCRIPT', defaultValue: 'AirSpringModelScript.m', description: 'MATLAB script to run')
-    }
+    agent { label 'linux-agent' }
 
     environment {
-        PROJECT_DIR = "${WORKSPACE}"
+        MASS = "300"
+        DAMPING = "1200"
+        PRESSURE = "2e5"
+        AREA = "0.015"
+        VOLUME = "0.01"
+        GAMMA = "1.4"
+        SIM_TIME = "10"
     }
 
     stages {
@@ -36,7 +31,8 @@ pipeline {
             steps {
                 echo 'Running MATLAB simulation...'
                 sh """
-                    matlab -batch "MASS=${params.MASS}; DAMPING=${params.DAMPING}; PRESSURE=${params.PRESSURE}; AREA=${params.AREA}; VOLUME=${params.VOLUME}; GAMMA=${params.GAMMA}; SIM_TIME=${params.SIM_TIME}; run('${PROJECT_DIR}/${params.MATLAB_SCRIPT}')"
+                    matlab -batch \\
+                    "MASS=${MASS}; DAMPING=${DAMPING}; PRESSURE=${PRESSURE}; AREA=${AREA}; VOLUME=${VOLUME}; GAMMA=${GAMMA}; SIM_TIME=${SIM_TIME}; run('Air_pressure.m')"
                 """
             }
         }
@@ -44,24 +40,28 @@ pipeline {
         stage('Run Python Automation') {
             steps {
                 echo 'Running Python automation script...'
-                sh 'python3 automation.py'
+                sh 'python3 python_automation.py'
             }
         }
 
         stage('Archive Results') {
             steps {
-                echo 'Archiving CSV and plot files...'
-                archiveArtifacts artifacts: 'plots/*, air_spring_output.csv', fingerprint: true
+                echo 'Archiving results...'
+                archiveArtifacts artifacts: 'air_spring_output.csv, plots/**', allowEmptyArchive: true
             }
         }
+
     }
 
     post {
+        always {
+            echo 'Pipeline finished.'
+        }
         success {
-            echo 'Pipeline succeeded! ✅'
+            echo '✅ Build succeeded!'
         }
         failure {
-            echo 'Pipeline failed! ❌'
+            echo '❌ Build failed!'
         }
     }
 }
