@@ -1,7 +1,6 @@
 pipeline {
-    agent { label 'linux-agent' }
+    agent any
 
-    // Build parameters
     parameters {
         string(name: 'MASS', defaultValue: '300', description: 'Sprung mass [kg]')
         string(name: 'DAMPING', defaultValue: '1200', description: 'Damping coefficient [Ns/m]')
@@ -10,15 +9,15 @@ pipeline {
         string(name: 'VOLUME', defaultValue: '0.01', description: 'Chamber volume [m^3]')
         string(name: 'GAMMA', defaultValue: '1.4', description: 'Polytropic index [-]')
         string(name: 'SIM_TIME', defaultValue: '10', description: 'Simulation time [s]')
+        string(name: 'MATLAB_SCRIPT', defaultValue: 'AirSpringModelScript.m', description: 'MATLAB script to run')
     }
 
     environment {
-        PROJECT_DIR = "/home/omrez/Downloads/MAt_working/python_jenkins"
-        MATLAB_SCRIPT = "Air_pressure.m"
-        PYTHON_SCRIPT = "python_automation.py"
+        PROJECT_DIR = "${WORKSPACE}"
     }
 
     stages {
+
         stage('Clean Plots Folder') {
             steps {
                 echo 'Cleaning plots folder...'
@@ -37,46 +36,29 @@ pipeline {
             steps {
                 echo 'Running MATLAB simulation...'
                 sh """
-                    matlab -batch "
-                    MASS=${params.MASS};
-                    DAMPING=${params.DAMPING};
-                    PRESSURE=${params.PRESSURE};
-                    AREA=${params.AREA};
-                    VOLUME=${params.VOLUME};
-                    GAMMA=${params.GAMMA};
-                    SIM_TIME=${params.SIM_TIME};
-                    run('${PROJECT_DIR}/${MATLAB_SCRIPT}')"
+                    matlab -batch "MASS=${params.MASS}; DAMPING=${params.DAMPING}; PRESSURE=${params.PRESSURE}; AREA=${params.AREA}; VOLUME=${params.VOLUME}; GAMMA=${params.GAMMA}; SIM_TIME=${params.SIM_TIME}; run('${PROJECT_DIR}/${params.MATLAB_SCRIPT}')"
                 """
             }
         }
 
         stage('Run Python Automation') {
             steps {
-                echo 'Running Python plotting script...'
-                sh "python3 ${PROJECT_DIR}/${PYTHON_SCRIPT}"
+                echo 'Running Python automation script...'
+                sh 'python3 automation.py'
             }
         }
 
         stage('Archive Results') {
             steps {
-                echo 'Archiving outputs...'
-                archiveArtifacts artifacts: 'plots/**, air_spring_output.csv', allowEmptyArchive: true
+                echo 'Archiving CSV and plot files...'
+                archiveArtifacts artifacts: 'plots/*, air_spring_output.csv', fingerprint: true
             }
         }
     }
 
     post {
-        always {
-            script {
-                // Save build status as 1 = success, 0 = fail
-                def statusValue = currentBuild.currentResult == 'SUCCESS' ? 1 : 0
-                writeFile file: 'build_status.txt', text: statusValue.toString()
-            }
-            archiveArtifacts artifacts: 'build_status.txt', allowEmptyArchive: true
-        }
-
         success {
-            echo 'Pipeline completed successfully! ✅'
+            echo 'Pipeline succeeded! ✅'
         }
         failure {
             echo 'Pipeline failed! ❌'
