@@ -1,0 +1,13 @@
+<plots>
+  <plot>
+    <title>Pass/Fail Trend</title>
+    <yaxis>0,1</yaxis>
+    <series>
+      <file>build_status.txt</file>
+      <label>Build Status</label>
+      <type>LINE</type>
+    </series>
+    <numBuilds>20</numBuilds>
+    <style>line</style>
+  </plot>
+</plots>

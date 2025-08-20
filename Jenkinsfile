@@ -5,7 +5,6 @@ pipeline {
         PROJECT_DIR = "/home/omrez/Downloads/MAt_working/python_jenkins"
         MATLAB_SCRIPT = "Air_pressure.m"
         PYTHON_SCRIPT = "python_automation.py"
-        PASS_FAIL_SCRIPT = "plot_pass_fail.py"
     }
 
     stages {
@@ -48,21 +47,27 @@ pipeline {
     post {
         always {
             script {
-                // Convert SUCCESS/FAILURE to 1/0 for trend plotting
+                // Write 1=SUCCESS, 0=FAILURE for plotting
                 def statusValue = currentBuild.currentResult == 'SUCCESS' ? 1 : 0
-                writeFile file: "${PROJECT_DIR}/build_status.txt", text: statusValue.toString()
-                
-                // Update pass/fail trend plot
-                sh "python3 ${PROJECT_DIR}/${PASS_FAIL_SCRIPT}"
+                writeFile file: 'build_status.txt', text: statusValue.toString()
             }
-            
-            // Archive the trend plot and status file
-            archiveArtifacts artifacts: 'plots/pass_fail_trend.png, build_status.txt', allowEmptyArchive: true
+
+            // Archive build_status.txt for Plot Plugin
+            archiveArtifacts artifacts: 'build_status.txt', allowEmptyArchive: true
+
+            // Generate plot using XML config
+            plot csvFileName: 'build_status.txt', 
+                 group: 'PassFailTrend', 
+                 style: 'line', 
+                 title: 'Pass/Fail Trend', 
+                 file: 'build_status.txt', 
+                 numBuilds: 20
         }
 
         success {
             echo 'Pipeline completed successfully! ✅'
         }
+
         failure {
             echo 'Pipeline failed! ❌'
         }
