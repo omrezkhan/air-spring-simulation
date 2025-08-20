@@ -9,7 +9,7 @@ scriptDir = fileparts(mfilename('fullpath'));
 cd(scriptDir);
 
 %% Parameters (feel free to change values)
-m = 300;          % Sprung mass [kg]
+m = 350;          % Sprung mass [kg]
 c = 1200;         % Damping coefficient [Ns/m]
 P0 = 2e5;         % Initial pressure [Pa]
 A = 0.015;        % Effective diaphragm area [m^2]
