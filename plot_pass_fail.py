@@ -27,4 +27,5 @@ plt.plot(range(1, len(statuses)+1), statuses, marker='o')
 plt.title("Pass/Fail Trend")
 plt.xlabel("Build Number")
 plt.ylabel("Status (1=Pass, 0=Fail)")
-plt.ylim(-0.1, 1.
+plt.ylim(-0.1, 1.1)
+
