@@ -2,8 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
+# Use the script's directory as base
+base_dir = os.path.dirname(os.path.abspath(__file__))
+
 # Load CSV file
-df = pd.read_csv('air_spring_output.csv')
+csv_path = os.path.join(base_dir, 'air_spring_output.csv')
+df = pd.read_csv(csv_path)
 
 # Extract signals
 time = df['time']
@@ -11,8 +15,9 @@ displacement = df['displacement']
 velocity = df['velocity']
 force = df['force']
 
-# Create folder for plots if it doesn't exist
-os.makedirs('plots', exist_ok=True)
+# Create folder for plots
+plots_dir = os.path.join(base_dir, 'plots')
+os.makedirs(plots_dir, exist_ok=True)
 
 # Create 3 subplots stacked vertically
 fig, axs = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
@@ -37,9 +42,10 @@ axs[2].grid(True)
 plt.tight_layout()
 
 # Save the figure
-plt.savefig('plots/air_spring_subplots.png')
+plot_file = os.path.join(plots_dir, 'air_spring_subplots.png')
+plt.savefig(plot_file)
 
-# Display the plots
-plt.show()
+print(f"✅ Plots saved in '{plot_file}'")
 
-print("✅ Plots saved in 'plots/air_spring_subplots.png'")
+# Optional: display the plot
+# plt.show()
