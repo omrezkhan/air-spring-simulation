@@ -1,19 +1,34 @@
 pipeline {
     agent { label 'linux-agent' }
 
+    parameters {
+        string(name: 'MASS', defaultValue: '300', description: 'Sprung mass [kg]')
+        string(name: 'DAMPING', defaultValue: '1200', description: 'Damping coefficient [Ns/m]')
+        string(name: 'PRESSURE', defaultValue: '2e5', description: 'Initial pressure [Pa]')
+        string(name: 'AREA', defaultValue: '0.015', description: 'Diaphragm area [m^2]')
+        string(name: 'VOLUME', defaultValue: '0.01', description: 'Chamber volume [m^3]')
+        string(name: 'GAMMA', defaultValue: '1.4', description: 'Polytropic index [-]')
+        string(name: 'SIM_TIME', defaultValue: '10', description: 'Simulation time [s]')
+    }
+
     environment {
-        MASS = "300"
-        DAMPING = "1200"
-        PRESSURE = "2e5"
-        AREA = "0.015"
-        VOLUME = "0.01"
-        GAMMA = "1.4"
-        SIM_TIME = "10"
-        MATLAB_PATH = "/usr/local/MATLAB/R2025a/bin/matlab"  // adjust as needed
+        MATLAB_PATH = "/usr/local/MATLAB/R2025a/bin/matlab"
         LOCAL_PROJECT_DIR = "/home/omrez/Downloads/MAt_working/python_jenkins"
     }
 
     stages {
+
+        stage('Clean Plots Folder') {
+            steps {
+                echo 'Cleaning plots folder...'
+                dir("${LOCAL_PROJECT_DIR}") {
+                    sh """
+                        mkdir -p plots
+                        rm -rf plots/*
+                    """
+                }
+            }
+        }
 
         stage('Checkout Code') {
             steps {
@@ -28,7 +43,7 @@ pipeline {
                 dir("${LOCAL_PROJECT_DIR}") {
                     sh """
                         ${MATLAB_PATH} -batch \\
-                        "MASS=${MASS}; DAMPING=${DAMPING}; PRESSURE=${PRESSURE}; AREA=${AREA}; VOLUME=${VOLUME}; GAMMA=${GAMMA}; SIM_TIME=${SIM_TIME}; run('Air_pressure.m')"
+                        "MASS=${params.MASS}; DAMPING=${params.DAMPING}; PRESSURE=${params.PRESSURE}; AREA=${params.AREA}; VOLUME=${params.VOLUME}; GAMMA=${params.GAMMA}; SIM_TIME=${params.SIM_TIME}; run('Air_pressure.m')"
                     """
                 }
             }
