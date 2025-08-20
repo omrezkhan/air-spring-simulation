@@ -10,20 +10,10 @@ pipeline {
         GAMMA = "1.4"
         SIM_TIME = "10"
         MATLAB_PATH = "/usr/local/MATLAB/R2025a/bin/matlab"  // adjust as needed
-        WORKSPACE_DIR = "/var/jenkins_home/workspace/AirSpringSimulation"
+        LOCAL_PROJECT_DIR = "/home/omrez/Downloads/MAt_working/python_jenkins"
     }
 
     stages {
-
-        stage('Clean Plots Folder') {
-            steps {
-                echo 'Cleaning plots folder...'
-                sh """
-                    mkdir -p ${WORKSPACE_DIR}/plots
-                    rm -rf ${WORKSPACE_DIR}/plots/*
-                """
-            }
-        }
 
         stage('Checkout Code') {
             steps {
@@ -35,7 +25,7 @@ pipeline {
         stage('Run MATLAB Simulation') {
             steps {
                 echo 'Running MATLAB simulation...'
-                dir("${WORKSPACE_DIR}") {
+                dir("${LOCAL_PROJECT_DIR}") {
                     sh """
                         ${MATLAB_PATH} -batch \\
                         "MASS=${MASS}; DAMPING=${DAMPING}; PRESSURE=${PRESSURE}; AREA=${AREA}; VOLUME=${VOLUME}; GAMMA=${GAMMA}; SIM_TIME=${SIM_TIME}; run('Air_pressure.m')"
@@ -46,8 +36,8 @@ pipeline {
 
         stage('Run Python Automation') {
             steps {
-                echo 'Running Python automation script...'
-                dir("${WORKSPACE_DIR}") {
+                echo 'Running Python automation script to generate plots...'
+                dir("${LOCAL_PROJECT_DIR}") {
                     sh 'python3 python_automation.py'
                 }
             }
@@ -56,15 +46,15 @@ pipeline {
         stage('Generate Pass/Fail Trend Graph') {
             steps {
                 echo 'Generating pass/fail trend graph...'
-                dir("${WORKSPACE_DIR}") {
+                dir("${LOCAL_PROJECT_DIR}") {
                     sh 'python3 plot_pass_fail.py'
                 }
             }
         }
 
-        stage('Archive Results') {
+        stage('Archive CSV and Plots') {
             steps {
-                echo 'Archiving results...'
+                echo 'Archiving CSV and plots...'
                 archiveArtifacts artifacts: 'air_spring_output.csv, plots/**', allowEmptyArchive: true
             }
         }
